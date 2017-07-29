@@ -1,13 +1,12 @@
 import { DeviceSimulatorService } from './services/device-simulator.service';
 import { AzureDeviceConnector } from './connectors/azure.amqp.connector';
+import { Constants } from "./app.constants";
 
 (function main() {
-    var deviceConnectionString = "{deviceConnectionString}";
     var amqpConnector = new AzureDeviceConnector();
     var deviceSimulator = new DeviceSimulatorService();
-    amqpConnector.connectToIotHub(deviceConnectionString);
+    amqpConnector.connectToIotHub(Constants.DeviceConnectionString);
     deviceSimulator.generateRandomDataInTimeInterval().subscribe((data) => {
-        //console.log(data);
         amqpConnector.sendMessageToCloud(data);
     });
 })();

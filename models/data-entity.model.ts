@@ -1,6 +1,6 @@
-export interface DataEntity{
-    timestamp: number;
-    messageType: string;
+import { BaseData } from "./base-data.model";
+
+export interface DataEntity extends BaseData {
     Group1: { 
         [key: string]: number;
     },

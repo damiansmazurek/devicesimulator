@@ -1,16 +1,20 @@
 import { Observable } from 'rxjs/observable';
-import { BehaviorSubject  } from 'rxjs/BehaviorSubject'
+import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { DataEntity } from "../models/data-entity.model";
+import { EventEntity } from "../models/event-entity.model";
 export class DeviceSimulatorService {
     $data: BehaviorSubject<DataEntity>;
+    $events: BehaviorSubject<EventEntity>;
+    $binaryFiles: BehaviorSubject<any>;
+    $cloudToDeviceMessage: BehaviorSubject<any>;
     constructor() {
         this.$data = new BehaviorSubject(null);
     }
     generateRandomDataInTimeInterval(timeout: number = 30000): BehaviorSubject<DataEntity> {
-        this.generateData(this, timeout);
+        this.generateMetricData(this, timeout);
         return this.$data;
     }
-    private generateData(self: DeviceSimulatorService, timeout: number = 30000) {
+    private generateMetricData(self: DeviceSimulatorService, timeout: number = 30000) {
         let dataJson: DataEntity = {
             messageType: "measurements",
             Group1: {
@@ -29,7 +33,40 @@ export class DeviceSimulatorService {
         self.$data.next(dataJson);
 
         setTimeout(() => {
-            self.generateData(self, timeout);
+            self.generateMetricData(self, timeout);
         }, timeout)
     }
+    private generateStartEventsData(self: DeviceSimulatorService, timeout: number = 30000) {
+        let alarmId = Math.random() *1000;
+         let dataJson: EventEntity = {
+            messageType: "event",
+            message: "Alarm "+alarmId,
+            state: "start",
+            level: "alarm",
+            id: alarmId,
+            timestamp: Date.now()
+
+        }
+        self.$events.next(dataJson);
+        setTimeout(() => {
+            self.generateEndEventData(self, timeout);
+        }, timeout)
+        setTimeout(() => {
+            self.generateStartEventsData(self, timeout);
+        }, 2*timeout)
+    }
+    generateEndEventData(self: DeviceSimulatorService, alarmId: number){
+         let dataJson: EventEntity = {
+            messageType: "event",
+            message: "Alarm end"+alarmId,
+            state: "stop",
+            level: "alarm",
+            id: alarmId,
+            timestamp: Date.now()
+        }
+    }
+    private generateFileData(self: DeviceSimulatorService, timeout: number = 30000) {
+
+    }
+    
 }
