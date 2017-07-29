@@ -12,6 +12,7 @@ export class DeviceSimulatorService {
     }
     private generateData(self: DeviceSimulatorService, timeout: number = 30000) {
         let dataJson: DataEntity = {
+            messageType: "measurements",
             Group1: {
                 a1: Math.random() * 5,
                 a2: Math.random() * 8,
