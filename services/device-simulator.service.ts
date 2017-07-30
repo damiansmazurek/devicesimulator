@@ -2,6 +2,7 @@ import { Observable } from 'rxjs/observable';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { DataEntity } from "../models/data-entity.model";
 import { EventEntity } from "../models/event-entity.model";
+import { C2DMessage } from "../models/c2d-message.model";
 export class DeviceSimulatorService {
     $data: BehaviorSubject<DataEntity>;
     $events: BehaviorSubject<EventEntity>;
@@ -9,10 +10,15 @@ export class DeviceSimulatorService {
     $cloudToDeviceMessage: BehaviorSubject<any>;
     constructor() {
         this.$data = new BehaviorSubject(null);
+        this.$events = new BehaviorSubject(null);
     }
     generateRandomDataInTimeInterval(timeout: number = 30000): BehaviorSubject<DataEntity> {
         this.generateMetricData(this, timeout);
         return this.$data;
+    }
+    generateEventsInTimeInterval(timeout: number = 30000): BehaviorSubject<EventEntity>{
+        this.generateStartEventsData(this,timeout);
+        return this.$events;
     }
     private generateMetricData(self: DeviceSimulatorService, timeout: number = 30000) {
         let dataJson: DataEntity = {
@@ -36,7 +42,7 @@ export class DeviceSimulatorService {
             self.generateMetricData(self, timeout);
         }, timeout)
     }
-    private generateStartEventsData(self: DeviceSimulatorService, timeout: number = 30000) {
+     private generateStartEventsData(self: DeviceSimulatorService, timeout: number = 30000) {
         let alarmId = Math.random() *1000;
          let dataJson: EventEntity = {
             messageType: "event",
@@ -55,7 +61,7 @@ export class DeviceSimulatorService {
             self.generateStartEventsData(self, timeout);
         }, 2*timeout)
     }
-    generateEndEventData(self: DeviceSimulatorService, alarmId: number){
+    private generateEndEventData(self: DeviceSimulatorService, alarmId: number){
          let dataJson: EventEntity = {
             messageType: "event",
             message: "Alarm end"+alarmId,
@@ -64,9 +70,16 @@ export class DeviceSimulatorService {
             id: alarmId,
             timestamp: Date.now()
         }
+        self.$events.next(dataJson);
     }
     private generateFileData(self: DeviceSimulatorService, timeout: number = 30000) {
 
+    }
+    receiveMessageFromDevice(message: C2DMessage){
+        let properties = message.transportObj.applicationProperties;
+        let bodyMessage = message.transportObj.body;
+        console.log("Properties: ", properties);
+        console.log("Body message: ", bodyMessage.toString());
     }
     
 }

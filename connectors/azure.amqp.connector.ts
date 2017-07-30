@@ -1,7 +1,16 @@
 import { Message, Client} from 'azure-iot-device';
 import {clientFromConnectionString} from 'azure-iot-device-amqp';
-export class AzureDeviceConnector{
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { C2DMessage } from "../models/c2d-message.model";
+export class AzureDeviceConnector {
     client: Client;
+    private $receivedMessage: BehaviorSubject<C2DMessage>;
+    constructor(){
+        this.$receivedMessage = new BehaviorSubject(null);
+    }
+    subscribeForReceivedMessage():BehaviorSubject<C2DMessage>{
+        return this.$receivedMessage;
+    }
       sendMessageToCloud(message) {
             var data = JSON.stringify(message);
             var iotMessage = new Message(data);
@@ -24,5 +33,8 @@ export class AzureDeviceConnector{
         connectToIotHub (connectionString) {
             this.client = clientFromConnectionString(connectionString);
             this.client.open(this.connectCallback);
+            this.client.addListener("message", (data)=>{
+               this.$receivedMessage.next(data);
+            });
         }
 }
