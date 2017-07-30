@@ -15,8 +15,7 @@ import { Constants } from "./app.constants";
     amqpConnector.subscribeForReceivedMessage().subscribe( (data)=>{
         if(data){
             try{
-            console.log(data.bodyMessage());
-            console.log(JSON.parse(data.transportObj.body.toString()));
+                deviceSimulator.receiveMessageFromDevice(data);
             }
         catch(e){
             console.log(e);
