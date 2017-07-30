@@ -1,5 +1,3 @@
-import { Message } from "./message.model";
-
 export interface C2DMessage {
 
     transportObj: {
