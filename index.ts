@@ -1,27 +1,43 @@
 import { DeviceSimulatorService } from './services/device-simulator.service';
-import { AzureDeviceConnector } from './connectors/azure.amqp.connector';
+import { AzureDeviceConnector } from './connectors/azure.mqtt.connector';
 import { Constants } from "./app.constants";
 
 (function main() {
-    var amqpConnector = new AzureDeviceConnector();
+    var mqttConnector = new AzureDeviceConnector();
     var deviceSimulator = new DeviceSimulatorService();
-    amqpConnector.connectToIotHub(Constants.DeviceConnectionString);
+    mqttConnector.subscribeForDeviceMethod('file').subscribe(data => {
+        console.log(data.eventName);
+        console.log(data.payload);
+        data.response.send(200);
+    });
+    mqttConnector.connectToIotHub(Constants.DeviceConnectionString);
+    mqttConnector.subscribeForConfiguration().subscribe(config => {
+        deviceSimulator.updateConfiguration(config);
+    });
     deviceSimulator.generateRandomDataInTimeInterval().subscribe((data) => {
-        amqpConnector.sendMessageToCloud(data);
+        mqttConnector.sendMessageToCloud(data);
     });
-    deviceSimulator.generateEventsInTimeInterval(60000).subscribe(event =>{
-        amqpConnector.sendMessageToCloud(event);
+    deviceSimulator.generateEventsInTimeInterval(60000).subscribe(event => {
+        mqttConnector.sendMessageToCloud(event);
     });
-    amqpConnector.subscribeForReceivedMessage().subscribe( (data)=>{
-        if(data){
-            try{
+    mqttConnector.subscribeForReceivedMessage().subscribe((data) => {
+        if (data) {
+            try {
                 deviceSimulator.receiveMessageFromDevice(data);
             }
-        catch(e){
-            console.log(e);
+            catch (e) {
+                console.log(e);
+            }
         }
-        }
-        
+
     });
+
+    deviceSimulator.configurationUpdatedSubscription().subscribe(isCompleted => {
+        if (isCompleted) {
+            mqttConnector.completeConfigChange();
+        }
+    });
+
+
 })();
 

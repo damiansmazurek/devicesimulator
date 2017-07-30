@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/damiansmazurek/devicesimulator#readme",
   "dependencies": {
+    "@types/mqtt": "0.0.34",
     "azure-iot-device": "^1.1.16",
     "azure-iot-device-amqp": "^1.1.16",
     "azure-iot-device-mqtt": "^1.1.16",

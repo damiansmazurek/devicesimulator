@@ -3,26 +3,37 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject'
 import { DataEntity } from "../models/data-entity.model";
 import { EventEntity } from "../models/event-entity.model";
 import { C2DMessage } from "../models/c2d-message.model";
+import { DeviceConfiguration } from "../models/device-configuration.model";
+import { Subject } from "rxjs/Subject";
 export class DeviceSimulatorService {
-    $data: BehaviorSubject<DataEntity>;
-    $events: BehaviorSubject<EventEntity>;
-    $binaryFiles: BehaviorSubject<any>;
-    $cloudToDeviceMessage: BehaviorSubject<any>;
+    private configuration: DeviceConfiguration;
+    private $data: BehaviorSubject<DataEntity>;
+    private $events: BehaviorSubject<EventEntity>;
+    private $binaryFiles: BehaviorSubject<any>;
+    private $cloudToDeviceMessage: BehaviorSubject<any>;
+    private $updatedConf: Subject<boolean>;
     constructor() {
         this.$data = new BehaviorSubject(null);
         this.$events = new BehaviorSubject(null);
+        this.$updatedConf = new Subject();
+        this.configuration = { configId: -1, dataInterval:5000}
     }
     generateRandomDataInTimeInterval(timeout: number = 30000): BehaviorSubject<DataEntity> {
-        this.generateMetricData(this, timeout);
+        this.generateMetricData(this);
         return this.$data;
     }
-    generateEventsInTimeInterval(timeout: number = 30000): BehaviorSubject<EventEntity>{
-        this.generateStartEventsData(this,timeout);
+    generateEventsInTimeInterval(timeout: number = 30000): BehaviorSubject<EventEntity> {
+        this.generateStartEventsData(this, timeout);
         return this.$events;
     }
-    private generateMetricData(self: DeviceSimulatorService, timeout: number = 30000) {
+    private generateMetricData(self: DeviceSimulatorService) {
+        if(self.configuration.status === 'Pending'){
+            self.configuration.status = 'Completed';
+            let updateOnDevice = this.configuration.configId !== -1;
+            this.$updatedConf.next(updateOnDevice);
+        }
         let dataJson: DataEntity = {
-            messageType: "measurements",
+            messageType: 'measurements',
             Group1: {
                 a1: Math.random() * 5,
                 a2: Math.random() * 8,
@@ -39,14 +50,14 @@ export class DeviceSimulatorService {
         self.$data.next(dataJson);
 
         setTimeout(() => {
-            self.generateMetricData(self, timeout);
-        }, timeout)
+            self.generateMetricData(self);
+        }, self.configuration.dataInterval)
     }
-     private generateStartEventsData(self: DeviceSimulatorService, timeout: number = 30000) {
-        let alarmId = Math.random() *1000;
-         let dataJson: EventEntity = {
+    private generateStartEventsData(self: DeviceSimulatorService, timeout: number = 30000) {
+        let alarmId = Math.random() * 1000;
+        let dataJson: EventEntity = {
             messageType: "event",
-            message: "Alarm "+alarmId,
+            message: "Alarm " + alarmId,
             state: "start",
             level: "alarm",
             id: alarmId,
@@ -59,12 +70,12 @@ export class DeviceSimulatorService {
         }, timeout)
         setTimeout(() => {
             self.generateStartEventsData(self, timeout);
-        }, 2*timeout)
+        }, 2 * timeout)
     }
-    private generateEndEventData(self: DeviceSimulatorService, alarmId: number){
-         let dataJson: EventEntity = {
+    private generateEndEventData(self: DeviceSimulatorService, alarmId: number) {
+        let dataJson: EventEntity = {
             messageType: "event",
-            message: "Alarm end"+alarmId,
+            message: "Alarm end" + alarmId,
             state: "stop",
             level: "alarm",
             id: alarmId,
@@ -72,14 +83,23 @@ export class DeviceSimulatorService {
         }
         self.$events.next(dataJson);
     }
+    
     private generateFileData(self: DeviceSimulatorService, timeout: number = 30000) {
 
     }
-    receiveMessageFromDevice(message: C2DMessage){
+    receiveMessageFromDevice(message: C2DMessage) {
         let properties = message.transportObj.applicationProperties;
         let bodyMessage = message.transportObj.body;
         console.log("Properties: ", properties);
         console.log("Body message: ", bodyMessage.toString());
     }
-    
+    configurationUpdatedSubscription():Subject<boolean>{
+        return this.$updatedConf;
+    }
+    updateConfiguration(conf: DeviceConfiguration){
+        this.configuration = conf;
+        this.configuration.status = 'Pending';
+        
+    }
+
 }
