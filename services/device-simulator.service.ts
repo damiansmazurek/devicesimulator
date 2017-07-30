@@ -5,6 +5,10 @@ import { EventEntity } from "../models/event-entity.model";
 import { C2DMessage } from "../models/c2d-message.model";
 import { DeviceConfiguration } from "../models/device-configuration.model";
 import { Subject } from "rxjs/Subject";
+import { Stream } from "stream";
+import { BinaryFileData } from "../models/binary-file.model";
+import { createReadStream, stat } from 'fs'
+import { Constants } from "../app.constants";
 export class DeviceSimulatorService {
     private configuration: DeviceConfiguration;
     private $data: BehaviorSubject<DataEntity>;
@@ -16,7 +20,7 @@ export class DeviceSimulatorService {
         this.$data = new BehaviorSubject(null);
         this.$events = new BehaviorSubject(null);
         this.$updatedConf = new Subject();
-        this.configuration = { configId: -1, dataInterval:5000}
+        this.configuration = { configId: -1, dataInterval: 5000 }
     }
     generateRandomDataInTimeInterval(timeout: number = 30000): BehaviorSubject<DataEntity> {
         this.generateMetricData(this);
@@ -27,7 +31,7 @@ export class DeviceSimulatorService {
         return this.$events;
     }
     private generateMetricData(self: DeviceSimulatorService) {
-        if(self.configuration.status === 'Pending'){
+        if (self.configuration.status === 'Pending') {
             self.configuration.status = 'Completed';
             let updateOnDevice = this.configuration.configId !== -1;
             this.$updatedConf.next(updateOnDevice);
@@ -83,8 +87,19 @@ export class DeviceSimulatorService {
         }
         self.$events.next(dataJson);
     }
-    
-    private generateFileData(self: DeviceSimulatorService, timeout: number = 30000) {
+
+    generateFileData(): Promise<BinaryFileData> {
+        return new Promise((resolve, reject) => {
+            stat(Constants.FilePath, (err, stats) => {
+                if(err){
+                    reject(err);
+                }
+                console.log(err, stats);
+                let fileName = 'Data_' + new Date().getTime();
+                let data = createReadStream(Constants.FilePath);
+                resolve({ fileName: fileName, data: data, length: stats.size });
+            });
+        })
 
     }
     receiveMessageFromDevice(message: C2DMessage) {
@@ -93,13 +108,13 @@ export class DeviceSimulatorService {
         console.log("Properties: ", properties);
         console.log("Body message: ", bodyMessage.toString());
     }
-    configurationUpdatedSubscription():Subject<boolean>{
+    configurationUpdatedSubscription(): Subject<boolean> {
         return this.$updatedConf;
     }
-    updateConfiguration(conf: DeviceConfiguration){
+    updateConfiguration(conf: DeviceConfiguration) {
         this.configuration = conf;
         this.configuration.status = 'Pending';
-        
+
     }
 
 }

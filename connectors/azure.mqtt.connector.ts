@@ -8,6 +8,7 @@ import { Subject } from "rxjs/Subject";
 import { DeviceMethod } from "../models/device-method.model";
 import { Observable } from "rxjs/observable";
 import { DeviceMethodSubscriber } from "../models/device-subscriber.model";
+import { Stream } from "stream";
 export class AzureDeviceConnector {
     private methodSubsribers: DeviceMethodSubscriber;
     private twin: Twin;
@@ -134,6 +135,13 @@ export class AzureDeviceConnector {
                 console.log('Reported completed config change: ' + JSON.stringify(patch));
             }
         });
+    }
+    uploadFile(fileName: string, stream:Stream, streamLength: number):Subject<any>{
+        let result = new Subject()
+        this.client.uploadToBlob(fileName,stream, streamLength, (err)=>{
+            result.next(err);
+        });
+        return result;
     }
 
 }
