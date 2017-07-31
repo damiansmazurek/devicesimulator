@@ -29,16 +29,16 @@ export class AzureDeviceConnector {
         return this.$configChanged;
     }
     subscribeForDeviceMethod(method: string): Subject<DeviceMethod> {
-        if(!this.methodSubsribers[method]){
-        this.methodSubsribers[method] = new Subject();
+        if (!this.methodSubsribers[method]) {
+            this.methodSubsribers[method] = new Subject();
         }
         return this.methodSubsribers[method];
     }
 
-    sendMessageToCloud(message,properties?:any) {
+    sendMessageToCloud(message, properties?: any) {
         var data = JSON.stringify(message);
         var iotMessage = new Message(data);
-        for(let key in properties){
+        for (let key in properties) {
             iotMessage.properties.add(key, properties[key]);
         }
         console.log("Data sended to cloud. Properties: ", properties);
@@ -66,16 +66,16 @@ export class AzureDeviceConnector {
         this.readDeviceMethods();
     }
     private readDeviceMethods() {
-         for(var key in this.methodSubsribers){
-             console.log(key);
-             this.client.onDeviceMethod(key, ((request,response ) => {
-            this.methodSubsribers[key].next({
-                eventName: request.methodName,
-                payload:request.payload,
-                requestId: request.requestId,
-                response: response
-            });
-        }));
+        for (var key in this.methodSubsribers) {
+            console.log(key);
+            this.client.onDeviceMethod(key, ((request, response) => {
+                this.methodSubsribers[key].next({
+                    eventName: request.methodName,
+                    payload: request.payload,
+                    requestId: request.requestId,
+                    response: response
+                });
+            }));
         }
     }
     private getTwinData() {
@@ -120,7 +120,7 @@ export class AzureDeviceConnector {
         });
     }
 
-     completeConfigChange() {
+    completeConfigChange() {
         let currentTelemetryConfig: DeviceConfiguration = this.twin.properties.reported.telemetryConfig;
         currentTelemetryConfig.configId = currentTelemetryConfig.pendingConfig.configId;
         currentTelemetryConfig.dataInterval = currentTelemetryConfig.pendingConfig.dataInterval;
@@ -139,9 +139,9 @@ export class AzureDeviceConnector {
             }
         });
     }
-    uploadFile(fileName: string, stream:Stream, streamLength: number):Subject<any>{
+    uploadFile(fileName: string, stream: Stream, streamLength: number): Subject<any> {
         let result = new Subject()
-        this.client.uploadToBlob(fileName,stream, streamLength, (err)=>{
+        this.client.uploadToBlob(fileName, stream, streamLength, (err) => {
             result.next(err);
         });
         return result;
