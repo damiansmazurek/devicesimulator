@@ -9,10 +9,10 @@ import { Constants } from "./app.constants";
         console.log(data.eventName);
         console.log(data.payload);
         data.response.send(200);
-        deviceSimulator.generateFileData().then(binaryFile =>{
-            mqttConnector.uploadFile(binaryFile.fileName,binaryFile.data,binaryFile.length).subscribe( data =>{ console.log('Blob sending end. Errors:',data);
-        });
-        
+        deviceSimulator.generateFileData().then(binaryFile => {
+            mqttConnector.uploadFile(binaryFile.fileName, binaryFile.data, binaryFile.length).subscribe(data => {
+                console.log('Blob sending end. Errors:', data);
+            });
         }).catch(error => console.log(error));
     });
     mqttConnector.connectToIotHub(Constants.DeviceConnectionString);
@@ -21,10 +21,10 @@ import { Constants } from "./app.constants";
         deviceSimulator.updateConfiguration(config);
     });
     deviceSimulator.generateRandomDataInTimeInterval().subscribe((data) => {
-        mqttConnector.sendMessageToCloud(data);
+        mqttConnector.sendMessageToCloud(data, {messageType:'metrics'});
     });
     deviceSimulator.generateEventsInTimeInterval(60000).subscribe(event => {
-        mqttConnector.sendMessageToCloud(event);
+        mqttConnector.sendMessageToCloud(event, {messageType: 'event'});
     });
     mqttConnector.subscribeForReceivedMessage().subscribe((data) => {
         if (data) {
@@ -35,7 +35,6 @@ import { Constants } from "./app.constants";
                 console.log(e);
             }
         }
-
     });
 
     deviceSimulator.configurationUpdatedSubscription().subscribe(isCompleted => {

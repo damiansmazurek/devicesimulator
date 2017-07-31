@@ -35,10 +35,13 @@ export class AzureDeviceConnector {
         return this.methodSubsribers[method];
     }
 
-    sendMessageToCloud(message) {
+    sendMessageToCloud(message,properties?:any) {
         var data = JSON.stringify(message);
         var iotMessage = new Message(data);
-        console.log("Sending message: " + iotMessage.getData());
+        for(let key in properties){
+            iotMessage.properties.add(key, properties[key]);
+        }
+        console.log("Data sended to cloud. Properties: ", properties);
         this.client.sendEvent(iotMessage, this.printResultFor('send'));
     }
     printResultFor(op) {
